@@ -91,12 +91,19 @@
     "dependencies": [],
     "defaultOrder": 50,
     "defaultEnabled": true,
-    "defaultOptions": {},
+    "defaultOptions": {
+      "hideWhenEmpty": true
+    },
     "components": {
       "Backlinks": {
         "displayName": "Backlinks",
         "defaultPosition": "right",
         "defaultPriority": 30
+      }
+    },
+    "optionSchema": {
+      "hideWhenEmpty": {
+        "type": "boolean"
       }
     }
   }
