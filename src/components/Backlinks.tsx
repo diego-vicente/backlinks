@@ -93,7 +93,10 @@ export default ((opts?: Partial<BacklinksOptions>) => {
       group.files.push(f);
       groups.set(key, group);
     }
-    const sorted = [...groups.values()].sort((a, b) => a.label.localeCompare(b.label));
+    // Largest groups first; alphabetical as a tiebreaker for stable ordering.
+    const sorted = [...groups.values()].sort(
+      (a, b) => b.files.length - a.files.length || a.label.localeCompare(b.label),
+    );
 
     return (
       <div class={classNames(displayClass, "backlinks")}>

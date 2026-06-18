@@ -465,7 +465,9 @@ var Backlinks_default = ((opts) => {
       group.files.push(f3);
       groups.set(key, group);
     }
-    const sorted = [...groups.values()].sort((a2, b2) => a2.label.localeCompare(b2.label));
+    const sorted = [...groups.values()].sort(
+      (a2, b2) => b2.files.length - a2.files.length || a2.label.localeCompare(b2.label)
+    );
     return /* @__PURE__ */ u2("div", { class: classNames(displayClass, "backlinks"), children: [
       /* @__PURE__ */ u2("h3", { children: i18n(locale).components.backlinks.title }),
       backlinkFiles.length > 0 ? sorted.map((group) => /* @__PURE__ */ u2("details", { class: "backlinks-group", children: [
