@@ -3,18 +3,59 @@
 
   & > h3 {
     font-size: 1rem;
-    margin: 0;
+    margin: 0 0 0.5rem;
   }
 
-  & > ul.overflow {
-    list-style: none;
-    padding: 0;
-    margin: 0.5rem 0;
-    max-height: calc(100% - 2rem);
-    overscroll-behavior: contain;
+  & .backlinks-empty {
+    margin: 0;
+    color: var(--gray);
+  }
 
-    & > li {
-      & > a {
+  // One collapsible group per note type (collapsed by default).
+  & .backlinks-group {
+    & > summary {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.25rem 0;
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+      font-weight: 600;
+      color: var(--darkgray);
+
+      &::-webkit-details-marker {
+        display: none;
+      }
+      &::before {
+        content: "";
+        display: inline-block;
+        width: 0.45em;
+        height: 0.45em;
+        border-right: 2px solid var(--gray);
+        border-bottom: 2px solid var(--gray);
+        transform: rotate(-45deg);
+        transition: transform 0.2s ease;
+      }
+    }
+
+    &[open] > summary::before {
+      transform: rotate(45deg);
+    }
+
+    & .backlinks-group-count {
+      margin-left: auto;
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: var(--gray);
+    }
+
+    & > ul {
+      list-style: none;
+      padding: 0 0 0 0.9rem;
+      margin: 0.1rem 0 0.4rem;
+
+      & > li > a {
         background-color: transparent;
       }
     }

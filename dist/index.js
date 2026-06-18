@@ -341,7 +341,7 @@ function i18n(locale) {
 }
 
 // src/components/styles/backlinks.scss
-var backlinks_default = ".backlinks {\n  flex-direction: column;\n}\n.backlinks > h3 {\n  font-size: 1rem;\n  margin: 0;\n}\n.backlinks > ul.overflow {\n  list-style: none;\n  padding: 0;\n  margin: 0.5rem 0;\n  max-height: calc(100% - 2rem);\n  overscroll-behavior: contain;\n}\n.backlinks > ul.overflow > li > a {\n  background-color: transparent;\n}";
+var backlinks_default = '.backlinks {\n  flex-direction: column;\n}\n.backlinks > h3 {\n  font-size: 1rem;\n  margin: 0 0 0.5rem;\n}\n.backlinks .backlinks-empty {\n  margin: 0;\n  color: var(--gray);\n}\n.backlinks .backlinks-group > summary {\n  display: flex;\n  align-items: center;\n  gap: 0.4rem;\n  padding: 0.25rem 0;\n  cursor: pointer;\n  user-select: none;\n  list-style: none;\n  font-weight: 600;\n  color: var(--darkgray);\n}\n.backlinks .backlinks-group > summary::-webkit-details-marker {\n  display: none;\n}\n.backlinks .backlinks-group > summary::before {\n  content: "";\n  display: inline-block;\n  width: 0.45em;\n  height: 0.45em;\n  border-right: 2px solid var(--gray);\n  border-bottom: 2px solid var(--gray);\n  transform: rotate(-45deg);\n  transition: transform 0.2s ease;\n}\n.backlinks .backlinks-group[open] > summary::before {\n  transform: rotate(45deg);\n}\n.backlinks .backlinks-group .backlinks-group-count {\n  margin-left: auto;\n  font-size: 0.8rem;\n  font-weight: 400;\n  color: var(--gray);\n}\n.backlinks .backlinks-group > ul {\n  list-style: none;\n  padding: 0 0 0 0.9rem;\n  margin: 0.1rem 0 0.4rem;\n}\n.backlinks .backlinks-group > ul > li > a {\n  background-color: transparent;\n}';
 
 // node_modules/@quartz-community/utils/dist/path.js
 function simplifySlug(fp) {
@@ -413,47 +413,6 @@ function u2(e2, t2, n2, o2, i2, u3) {
   return l.vnode && l.vnode(l2), l2;
 }
 
-// src/components/OverflowList.tsx
-var OverflowList = ({
-  children,
-  ...props
-}) => {
-  return /* @__PURE__ */ u2("ul", { ...props, class: [props.class, "overflow"].filter(Boolean).join(" "), id: props.id, children: [
-    children,
-    /* @__PURE__ */ u2("li", { class: "overflow-end" })
-  ] });
-};
-var numLists = 0;
-var OverflowList_default = () => {
-  const id = `list-${numLists++}`;
-  return {
-    OverflowList: (props) => /* @__PURE__ */ u2(OverflowList, { ...props, id }),
-    overflowListAfterDOMLoaded: `
-document.addEventListener("nav", (e) => {
-  const observer = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      const parentUl = entry.target.parentElement
-      if (!parentUl) return
-      if (entry.isIntersecting) {
-        parentUl.classList.remove("gradient-active")
-      } else {
-        parentUl.classList.add("gradient-active")
-      }
-    }
-  })
-
-  const ul = document.getElementById("${id}")
-  if (!ul) return
-
-  const end = ul.querySelector(".overflow-end")
-  if (!end) return
-
-  observer.observe(end)
-})
-`
-  };
-};
-
 // src/components/Backlinks.tsx
 var defaultOptions = {
   hideWhenEmpty: true
@@ -461,9 +420,18 @@ var defaultOptions = {
 function selectBacklinkSources(allFiles, currentSlug) {
   return allFiles.filter((file) => file.unlisted !== true && file.links?.includes(currentSlug));
 }
+function typeOf(raw) {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  if (typeof value !== "string" || !value.trim()) return { key: "~", label: "Other" };
+  let label = value.trim();
+  const wiki = label.match(/^\[\[([^\]]+)\]\]$/);
+  if (wiki?.[1]) label = wiki[1];
+  label = label.replace(/[|#].*$/, "").trim();
+  return { key: label.toLowerCase() || "~", label: label || "Other" };
+}
+var titleOf = (f3) => f3.frontmatter?.title || f3.slug?.split("/").pop() || "Untitled";
 var Backlinks_default = ((opts) => {
   const options = { ...defaultOptions, ...opts };
-  const { OverflowList: OverflowList2, overflowListAfterDOMLoaded } = OverflowList_default();
   const Backlinks = ({
     fileData,
     allFiles,
@@ -476,13 +444,26 @@ var Backlinks_default = ((opts) => {
     if (options.hideWhenEmpty && backlinkFiles.length === 0) {
       return null;
     }
+    const groups = /* @__PURE__ */ new Map();
+    for (const f3 of backlinkFiles) {
+      const { key, label } = typeOf(f3.frontmatter?.type);
+      const group = groups.get(key) ?? { label, files: [] };
+      group.files.push(f3);
+      groups.set(key, group);
+    }
+    const sorted = [...groups.values()].sort((a2, b2) => a2.label.localeCompare(b2.label));
     return /* @__PURE__ */ u2("div", { class: classNames(displayClass, "backlinks"), children: [
       /* @__PURE__ */ u2("h3", { children: i18n(locale).components.backlinks.title }),
-      /* @__PURE__ */ u2(OverflowList2, { children: backlinkFiles.length > 0 ? backlinkFiles.map((f3) => /* @__PURE__ */ u2("li", { children: /* @__PURE__ */ u2("a", { href: resolveRelative(fileData.slug, f3.slug), class: "internal", children: f3.frontmatter?.title }) })) : /* @__PURE__ */ u2("li", { children: i18n(locale).components.backlinks.noBacklinksFound }) })
+      backlinkFiles.length > 0 ? sorted.map((group) => /* @__PURE__ */ u2("details", { class: "backlinks-group", children: [
+        /* @__PURE__ */ u2("summary", { children: [
+          /* @__PURE__ */ u2("span", { class: "backlinks-group-label", children: group.label }),
+          /* @__PURE__ */ u2("span", { class: "backlinks-group-count", children: group.files.length })
+        ] }),
+        /* @__PURE__ */ u2("ul", { children: group.files.map((f3) => /* @__PURE__ */ u2("li", { children: /* @__PURE__ */ u2("a", { href: resolveRelative(fileData.slug, f3.slug), class: "internal", children: titleOf(f3) }) })) })
+      ] })) : /* @__PURE__ */ u2("p", { class: "backlinks-empty", children: i18n(locale).components.backlinks.noBacklinksFound })
     ] });
   };
   Backlinks.css = backlinks_default;
-  Backlinks.afterDOMLoaded = overflowListAfterDOMLoaded;
   return Backlinks;
 });
 
