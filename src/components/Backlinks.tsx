@@ -45,6 +45,22 @@ function typeOf(raw: unknown): { key: string; label: string } {
 const titleOf = (f: BacklinkCandidate): string =>
   f.frontmatter?.title || f.slug?.split("/").pop() || "Untitled";
 
+/** A note is an "Obsidian Entity" (a type itself) if it's typed Obsidian Entity OR
+ *  it's referenced as some note's `type` (e.g. Travel Itinerary, which is typed
+ *  Practice but is itself a type). Both cases = the note's name is a type slug. */
+const ENTITY_GROUP = { key: "obsidian-entity", label: "Obsidian Entities" };
+function groupFor(
+  f: BacklinkCandidate,
+  typeSlugs: Set<string>,
+): { key: string; label: string } {
+  const own = typeOf(f.frontmatter?.type).key;
+  const nameSlug = (f.slug ?? "").split("/").pop() ?? "";
+  if (own === "obsidian-entity" || typeSlugs.has(nameSlug) || typeSlugs.has(f.slug ?? "")) {
+    return ENTITY_GROUP;
+  }
+  return typeOf(f.frontmatter?.type);
+}
+
 export default ((opts?: Partial<BacklinksOptions>) => {
   const options: BacklinksOptions = { ...defaultOptions, ...opts };
 
@@ -61,11 +77,18 @@ export default ((opts?: Partial<BacklinksOptions>) => {
       return null;
     }
 
-    // Group backlinks by the linking note's type, then order groups by label
-    // ("Other" — untyped — sorts last via its "~" key fallback in the label).
+    // Set of every type slug used in the vault — a note whose name is in here is
+    // itself a type, so it groups under "Obsidian Entities".
+    const typeSlugs = new Set<string>();
+    for (const f of allFiles as BacklinkCandidate[]) {
+      const t = typeOf(f.frontmatter?.type).key;
+      if (t && t !== "~") typeSlugs.add(t);
+    }
+
+    // Group backlinks by type — entities (types themselves) fold into one group.
     const groups = new Map<string, { key: string; label: string; files: BacklinkCandidate[] }>();
     for (const f of backlinkFiles) {
-      const { key, label } = typeOf(f.frontmatter?.type);
+      const { key, label } = groupFor(f, typeSlugs);
       const group = groups.get(key) ?? { key, label, files: [] };
       group.files.push(f);
       groups.set(key, group);

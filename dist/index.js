@@ -430,6 +430,15 @@ function typeOf(raw) {
   return { key: label.toLowerCase().replace(/\s+/g, "-") || "~", label: label || "Other" };
 }
 var titleOf = (f3) => f3.frontmatter?.title || f3.slug?.split("/").pop() || "Untitled";
+var ENTITY_GROUP = { key: "obsidian-entity", label: "Obsidian Entities" };
+function groupFor(f3, typeSlugs) {
+  const own2 = typeOf(f3.frontmatter?.type).key;
+  const nameSlug = (f3.slug ?? "").split("/").pop() ?? "";
+  if (own2 === "obsidian-entity" || typeSlugs.has(nameSlug) || typeSlugs.has(f3.slug ?? "")) {
+    return ENTITY_GROUP;
+  }
+  return typeOf(f3.frontmatter?.type);
+}
 var Backlinks_default = ((opts) => {
   const options = { ...defaultOptions, ...opts };
   const Backlinks = ({
@@ -444,9 +453,14 @@ var Backlinks_default = ((opts) => {
     if (options.hideWhenEmpty && backlinkFiles.length === 0) {
       return null;
     }
+    const typeSlugs = /* @__PURE__ */ new Set();
+    for (const f3 of allFiles) {
+      const t2 = typeOf(f3.frontmatter?.type).key;
+      if (t2 && t2 !== "~") typeSlugs.add(t2);
+    }
     const groups = /* @__PURE__ */ new Map();
     for (const f3 of backlinkFiles) {
-      const { key, label } = typeOf(f3.frontmatter?.type);
+      const { key, label } = groupFor(f3, typeSlugs);
       const group = groups.get(key) ?? { key, label, files: [] };
       group.files.push(f3);
       groups.set(key, group);
