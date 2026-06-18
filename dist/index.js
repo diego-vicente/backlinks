@@ -427,7 +427,7 @@ function typeOf(raw) {
   const wiki = label.match(/^\[\[([^\]]+)\]\]$/);
   if (wiki?.[1]) label = wiki[1];
   label = label.replace(/[|#].*$/, "").trim();
-  return { key: label.toLowerCase() || "~", label: label || "Other" };
+  return { key: label.toLowerCase().replace(/\s+/g, "-") || "~", label: label || "Other" };
 }
 var titleOf = (f3) => f3.frontmatter?.title || f3.slug?.split("/").pop() || "Untitled";
 var Backlinks_default = ((opts) => {
@@ -447,7 +447,7 @@ var Backlinks_default = ((opts) => {
     const groups = /* @__PURE__ */ new Map();
     for (const f3 of backlinkFiles) {
       const { key, label } = typeOf(f3.frontmatter?.type);
-      const group = groups.get(key) ?? { label, files: [] };
+      const group = groups.get(key) ?? { key, label, files: [] };
       group.files.push(f3);
       groups.set(key, group);
     }
@@ -456,7 +456,14 @@ var Backlinks_default = ((opts) => {
       /* @__PURE__ */ u2("h3", { children: i18n(locale).components.backlinks.title }),
       backlinkFiles.length > 0 ? sorted.map((group) => /* @__PURE__ */ u2("details", { class: "backlinks-group", children: [
         /* @__PURE__ */ u2("summary", { children: [
-          /* @__PURE__ */ u2("span", { class: "backlinks-group-label", children: group.label }),
+          /* @__PURE__ */ u2(
+            "span",
+            {
+              class: "backlinks-group-label",
+              style: `color: var(--lt-${group.key}, var(--darkgray))`,
+              children: group.label
+            }
+          ),
           /* @__PURE__ */ u2("span", { class: "backlinks-group-count", children: group.files.length })
         ] }),
         /* @__PURE__ */ u2("ul", { children: group.files.map((f3) => /* @__PURE__ */ u2("li", { children: /* @__PURE__ */ u2("a", { href: resolveRelative(fileData.slug, f3.slug), class: "internal", children: titleOf(f3) }) })) })

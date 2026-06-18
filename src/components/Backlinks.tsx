@@ -38,7 +38,8 @@ function typeOf(raw: unknown): { key: string; label: string } {
   const wiki = label.match(/^\[\[([^\]]+)\]\]$/);
   if (wiki?.[1]) label = wiki[1];
   label = label.replace(/[|#].*$/, "").trim();
-  return { key: label.toLowerCase() || "~", label: label || "Other" };
+  // key is the type slug (matches the `--lt-<type>` color vars / link palette).
+  return { key: label.toLowerCase().replace(/\s+/g, "-") || "~", label: label || "Other" };
 }
 
 const titleOf = (f: BacklinkCandidate): string =>
@@ -62,10 +63,10 @@ export default ((opts?: Partial<BacklinksOptions>) => {
 
     // Group backlinks by the linking note's type, then order groups by label
     // ("Other" — untyped — sorts last via its "~" key fallback in the label).
-    const groups = new Map<string, { label: string; files: BacklinkCandidate[] }>();
+    const groups = new Map<string, { key: string; label: string; files: BacklinkCandidate[] }>();
     for (const f of backlinkFiles) {
       const { key, label } = typeOf(f.frontmatter?.type);
-      const group = groups.get(key) ?? { label, files: [] };
+      const group = groups.get(key) ?? { key, label, files: [] };
       group.files.push(f);
       groups.set(key, group);
     }
@@ -78,7 +79,13 @@ export default ((opts?: Partial<BacklinksOptions>) => {
           sorted.map((group) => (
             <details class="backlinks-group">
               <summary>
-                <span class="backlinks-group-label">{group.label}</span>
+                {/* Colored by the type's palette var (text only — not a link, no pill bg). */}
+                <span
+                  class="backlinks-group-label"
+                  style={`color: var(--lt-${group.key}, var(--darkgray))`}
+                >
+                  {group.label}
+                </span>
                 <span class="backlinks-group-count">{group.files.length}</span>
               </summary>
               <ul>
