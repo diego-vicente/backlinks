@@ -49,10 +49,16 @@ const titleOf = (f: BacklinkCandidate): string =>
  *  it's referenced as some note's `type` (e.g. Travel Itinerary, which is typed
  *  Practice but is itself a type). Both cases = the note's name is a type slug. */
 const ENTITY_GROUP = { key: "obsidian-entity", label: "Obsidian Entities" };
+// A base page (Films, Places, …) has no `type`, so it would fall into "Other".
+// List those explicitly under "Bases" (greyed — they're index pages, not content).
+const BASES_GROUP = { key: "bases", label: "Bases" };
+const isBasePage = (f: BacklinkCandidate): boolean =>
+  (f as { basesData?: unknown }).basesData != null;
 function groupFor(
   f: BacklinkCandidate,
   typeSlugs: Set<string>,
 ): { key: string; label: string } {
+  if (isBasePage(f)) return BASES_GROUP;
   const own = typeOf(f.frontmatter?.type).key;
   const nameSlug = (f.slug ?? "").split("/").pop() ?? "";
   if (own === "obsidian-entity" || typeSlugs.has(nameSlug) || typeSlugs.has(f.slug ?? "")) {
@@ -103,12 +109,13 @@ export default ((opts?: Partial<BacklinksOptions>) => {
         <h3>{i18n(locale).components.backlinks.title}</h3>
         {backlinkFiles.length > 0 ? (
           sorted.map((group) => (
-            <details class="backlinks-group">
+            <details class={`backlinks-group${group.key === "bases" ? " backlinks-group--bases" : ""}`}>
               <summary>
-                {/* Colored by the type's palette var (text only — not a link, no pill bg). */}
+                {/* Colored by the type's palette var (text only — not a link, no pill bg).
+                    Bases are greyed: they're index pages, not a content type. */}
                 <span
                   class="backlinks-group-label"
-                  style={`color: var(--lt-${group.key}, var(--darkgray))`}
+                  style={`color: ${group.key === "bases" ? "var(--gray)" : `var(--lt-${group.key}, var(--darkgray))`}`}
                 >
                   {group.label}
                 </span>

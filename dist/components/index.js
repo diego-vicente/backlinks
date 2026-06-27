@@ -431,7 +431,10 @@ function typeOf(raw) {
 }
 var titleOf = (f3) => f3.frontmatter?.title || f3.slug?.split("/").pop() || "Untitled";
 var ENTITY_GROUP = { key: "obsidian-entity", label: "Obsidian Entities" };
+var BASES_GROUP = { key: "bases", label: "Bases" };
+var isBasePage = (f3) => f3.basesData != null;
 function groupFor(f3, typeSlugs) {
+  if (isBasePage(f3)) return BASES_GROUP;
   const own2 = typeOf(f3.frontmatter?.type).key;
   const nameSlug = (f3.slug ?? "").split("/").pop() ?? "";
   if (own2 === "obsidian-entity" || typeSlugs.has(nameSlug) || typeSlugs.has(f3.slug ?? "")) {
@@ -470,13 +473,13 @@ var Backlinks_default = ((opts) => {
     );
     return /* @__PURE__ */ u2("div", { class: classNames(displayClass, "backlinks"), children: [
       /* @__PURE__ */ u2("h3", { children: i18n(locale).components.backlinks.title }),
-      backlinkFiles.length > 0 ? sorted.map((group) => /* @__PURE__ */ u2("details", { class: "backlinks-group", children: [
+      backlinkFiles.length > 0 ? sorted.map((group) => /* @__PURE__ */ u2("details", { class: `backlinks-group${group.key === "bases" ? " backlinks-group--bases" : ""}`, children: [
         /* @__PURE__ */ u2("summary", { children: [
           /* @__PURE__ */ u2(
             "span",
             {
               class: "backlinks-group-label",
-              style: `color: var(--lt-${group.key}, var(--darkgray))`,
+              style: `color: ${group.key === "bases" ? "var(--gray)" : `var(--lt-${group.key}, var(--darkgray))`}`,
               children: group.label
             }
           ),
